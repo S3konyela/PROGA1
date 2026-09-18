@@ -1,4 +1,4 @@
-# ProgrammingA1 - Part 1
+# Programming - Part 1
 
 This is a console-only Java solution for the Part 1 registration and login feature.
 
@@ -21,3 +21,6 @@ This is a console-only Java solution for the Part 1 registration and login featu
 ## Notes
 
 The regular-expression cell phone checker is referenced in the `Login` class comment beside the regex code.
+
+Youtube Link 
+https://youtu.be/IDQ6FaT7wWM?si=t6Z2aRI0KnsYIhLe
