@@ -1,6 +1,5 @@
-target/
-build/
-*.class
-.idea/
-.vscode/
-nbproject/private/
+/target/
+/stored_messages.json
+*.tmp
+/.idea/
+*.iml
