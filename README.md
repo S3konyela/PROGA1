@@ -1,8 +1,7 @@
 # PROG5121 POE — Programming 1A
 
-Prepared for Sekonyela Clive Mokoena, ST10449919.
-
-This repository contains the work completed for **Part 1** and **Part 2** of the PROG5121 POE. Part 1 covers registration and login validation. Part 2 extends the same application with the QuickChat messaging feature.
+Sekonyela Clive Mokoena  
+Student Number: ST10449919
 
 ## Part 1 — Registration and Login
 
