@@ -25,6 +25,82 @@ Part 1 implements the required account registration and login functionality.
 - Welcome message after a successful login
 - Error message for an unsuccessful login
 
+### Part 1 test examples for NetBeans presentation
+
+Use these exact examples when demonstrating Part 1.
+
+| Test | Input | Expected result |
+| --- | --- | --- |
+| Valid username | `kyl_1` | `Username successfully captured.` |
+| Invalid username | `kyle!!!!!!!` | Username formatting error |
+| Valid password | `Ch&&sec@ke99!` | `Password successfully captured.` |
+| Invalid password | `password` | Password complexity error |
+| Valid cellphone | `+27838968976` | `Cell number successfully captured.` |
+| Invalid cellphone | `08966553` | Cellphone formatting error |
+| Successful registration | `kyl_1`, `Ch&&sec@ke99!`, `+27838968976` | `User has been registered successfully.` |
+| Successful login | Username `kyl_1`, password `Ch&&sec@ke99!` | `Welcome Kyle, Smith it is great to see you again.` |
+| Failed login | Username `kyl_1`, password `password` | `Username or password incorrect, please try again.` |
+
+#### Full successful Part 1 run
+
+Enter:
+
+```text
+First name: Kyle
+Last name: Smith
+Username: kyl_1
+Password: Ch&&sec@ke99!
+Cell number: +27838968976
+```
+
+Expected validation and registration messages:
+
+```text
+Username successfully captured.
+Password successfully captured.
+Cell number successfully captured.
+User has been registered successfully.
+```
+
+Then log in with:
+
+```text
+Username: kyl_1
+Password: Ch&&sec@ke99!
+```
+
+Expected result:
+
+```text
+Welcome Kyle, Smith it is great to see you again.
+```
+
+#### Invalid Part 1 example
+
+Restart the application and enter:
+
+```text
+First name: Kyle
+Last name: Smith
+Username: kyle!!!!!!!
+Password: password
+Cell number: 08966553
+```
+
+Expected errors:
+
+```text
+Username is not correctly formatted; please ensure that your username contains an underscore and is no more than five characters in length.
+Password is not correctly formatted; please ensure that the password contains at least eight characters, a capital letter, a number, and a special character.
+Cell phone number is incorrectly formatted or does not contain an international code; please correct the number and try again.
+```
+
+Because registration is invalid, the program displays:
+
+```text
+Registration failed. Please restart the application and try again.
+```
+
 ### Part 1 class
 
 `src/main/java/Login.java`
