@@ -3,6 +3,10 @@
 Sekonyela Clive Mokoena  
 Student Number: ST10449919
 
+## Video demonstration
+
+https://youtu.be/WbipWEmWOr8
+
 ## Part 1 — Registration and Login
 
 Part 1 implements the required account registration and login functionality.
