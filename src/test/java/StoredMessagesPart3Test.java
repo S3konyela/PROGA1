@@ -71,10 +71,17 @@ class StoredMessagesPart3Test {
         stored(session, store, "0000000005", 4, "+27838884567",
                 "Ok, I am leaving without you.");
 
+        MessageSession reloadedSession = new MessageSession();
+        store.loadInto(reloadedSession);
+
         assertEquals(List.of(
                 "Where are you? You are late! I have asked you to be on time.",
                 "Ok, I am leaving without you."),
-                session.findMessagesByRecipient("+27838884567").stream()
+                reloadedSession.getStoredMessageArray());
+        assertEquals(List.of(
+                "Where are you? You are late! I have asked you to be on time.",
+                "Ok, I am leaving without you."),
+                reloadedSession.findMessagesByRecipient("+27838884567").stream()
                         .map(Message::getMessageText).toList());
     }
 
@@ -86,7 +93,10 @@ class StoredMessagesPart3Test {
                 "Where are you? You are late! I have asked you to be on time.");
 
         assertTrue(store.deleteByHash(messageTwo.getMessageHash()));
+        session.removeStoredMessageByHash(messageTwo.getMessageHash());
         assertTrue(store.readAll().isEmpty());
+        assertTrue(session.getStoredMessageArray().isEmpty());
+        assertFalse(session.getMessageHashArray().contains(messageTwo.getMessageHash()));
     }
 
     @Test
