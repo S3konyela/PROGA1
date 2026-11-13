@@ -19,21 +19,16 @@ public class MessageSession {
     public String generateUniqueMessageId() {
         String id;
         do {
-            long number = RANDOM.nextLong(10_000_000_000L);
-            id = String.format("%010d", number);
+            id = String.format("%010d", RANDOM.nextLong(10_000_000_000L));
         } while (!issuedIds.add(id));
         return id;
     }
 
     public void setSender(String sender) {
-        if (sender != null && !sender.isBlank()) {
-            this.sender = sender.trim();
-        }
+        if (sender != null && !sender.isBlank()) this.sender = sender.trim();
     }
 
-    public String getSender() {
-        return sender;
-    }
+    public String getSender() { return sender; }
 
     private void registerMetadata(Message message) {
         if (!messageIds.contains(message.getMessageId())) {
@@ -63,45 +58,35 @@ public class MessageSession {
         }
     }
 
-    public List<Message> getSentMessages() {
-        return List.copyOf(sentMessages);
+    public boolean removeStoredMessageByHash(String hash) {
+        Message found = storedMessages.stream()
+                .filter(message -> message.getMessageHash().equals(hash))
+                .findFirst().orElse(null);
+        if (found == null) return false;
+        storedMessages.remove(found);
+        return true;
     }
 
-    public List<Message> getDisregardedMessages() {
-        return List.copyOf(disregardedMessages);
-    }
-
-    public List<Message> getStoredMessages() {
-        return List.copyOf(storedMessages);
-    }
+    public List<Message> getSentMessages() { return List.copyOf(sentMessages); }
+    public List<Message> getDisregardedMessages() { return List.copyOf(disregardedMessages); }
+    public List<Message> getStoredMessages() { return List.copyOf(storedMessages); }
 
     public List<String> getSentMessageArray() {
         return sentMessages.stream().map(Message::getMessageText).collect(Collectors.toUnmodifiableList());
     }
-
     public List<String> getDisregardedMessageArray() {
         return disregardedMessages.stream().map(Message::getMessageText).collect(Collectors.toUnmodifiableList());
     }
-
     public List<String> getStoredMessageArray() {
         return storedMessages.stream().map(Message::getMessageText).collect(Collectors.toUnmodifiableList());
     }
-
-    public List<String> getMessageHashArray() {
-        return List.copyOf(messageHashes);
-    }
-
-    public List<String> getMessageIdArray() {
-        return List.copyOf(messageIds);
-    }
+    public List<String> getMessageHashArray() { return List.copyOf(messageHashes); }
+    public List<String> getMessageIdArray() { return List.copyOf(messageIds); }
 
     public Message findMessageById(String id) {
-        for (Message message : allSessionMessages()) {
-            if (message.getMessageId().equals(id)) {
-                return message;
-            }
-        }
-        return null;
+        return allSessionMessages().stream()
+                .filter(message -> message.getMessageId().equals(id))
+                .findFirst().orElse(null);
     }
 
     public List<Message> findMessagesByRecipient(String recipient) {
@@ -118,7 +103,5 @@ public class MessageSession {
         return List.copyOf(all);
     }
 
-    public int getTotalSentMessages() {
-        return sentMessages.size();
-    }
+    public int getTotalSentMessages() { return sentMessages.size(); }
 }
