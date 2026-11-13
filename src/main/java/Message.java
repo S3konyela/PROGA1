@@ -60,7 +60,6 @@ public class Message {
         if (trimmed.isEmpty()) {
             return messageId.substring(0, 2) + ":" + messageNumber + ":";
         }
-
         String[] words = trimmed.split("\\s+");
         String first = stripBoundaryPunctuation(words[0]);
         String last = stripBoundaryPunctuation(words[words.length - 1]);
@@ -79,7 +78,6 @@ public class Message {
         if (action == null) {
             throw new IllegalStateException("Select a message action first.");
         }
-
         return switch (action) {
             case SEND -> {
                 status = "Sent";
@@ -116,9 +114,11 @@ public class Message {
     public String storeMessage(JsonMessageStore store) throws java.io.IOException {
         status = "Stored";
         store.append(this);
+        session.registerStoredMessage(this);
         return STORE_SUCCESS;
     }
 
+    public String getSender() { return session.getSender(); }
     public String getMessageId() { return messageId; }
     public int getMessageNumber() { return messageNumber; }
     public String getRecipient() { return recipient; }
@@ -128,5 +128,6 @@ public class Message {
 
     public void markDiscarded() {
         status = "Discarded";
+        session.registerDisregardedMessage(this);
     }
 }
