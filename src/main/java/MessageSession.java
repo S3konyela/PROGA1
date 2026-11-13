@@ -64,7 +64,19 @@ public class MessageSession {
                 .findFirst().orElse(null);
         if (found == null) return false;
         storedMessages.remove(found);
+        rebuildMetadata();
         return true;
+    }
+
+    private void rebuildMetadata() {
+        messageHashes.clear();
+        messageIds.clear();
+        for (Message message : allSessionMessages()) {
+            if (!messageIds.contains(message.getMessageId())) {
+                messageIds.add(message.getMessageId());
+                messageHashes.add(message.getMessageHash());
+            }
+        }
     }
 
     public List<Message> getSentMessages() { return List.copyOf(sentMessages); }
