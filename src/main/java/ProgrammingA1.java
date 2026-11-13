@@ -108,8 +108,8 @@ public class ProgrammingA1 {
                 switch (option) {
                     case "a" -> displaySendersAndRecipients(store);
                     case "b" -> displayLongestStoredMessage(store);
-                    case "c" -> searchStoredMessageById(scanner, store);
-                    case "d" -> searchStoredMessagesByRecipient(scanner, store);
+                    case "c" -> searchStoredMessageById(scanner, store, session);
+                    case "d" -> searchStoredMessagesByRecipient(scanner, store, session);
                     case "e" -> deleteStoredMessageByHash(scanner, store, session);
                     case "f" -> displayStoredMessageReport(store);
                     case "g" -> { return; }
