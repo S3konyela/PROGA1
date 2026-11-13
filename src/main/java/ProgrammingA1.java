@@ -143,19 +143,34 @@ public class ProgrammingA1 {
         }
     }
 
-    private static void searchStoredMessageById(Scanner scanner, JsonMessageStore store) throws IOException {
+    private static void searchStoredMessageById(Scanner scanner, JsonMessageStore store,
+                                                 MessageSession session) throws IOException {
         String id = prompt(scanner, "Enter message ID: ").trim();
+        Message sessionMessage = session.findMessageById(id);
+        if (sessionMessage != null) {
+            System.out.println("Recipient: " + sessionMessage.getRecipient());
+            System.out.println("Message: " + sessionMessage.getMessageText());
+            return;
+        }
         var result = store.findByMessageId(id);
         if (result.isEmpty()) {
-            System.out.println("No stored message was found for message ID " + id + ".");
+            System.out.println("No message was found for message ID " + id + ".");
         } else {
             System.out.println("Recipient: " + result.get().getRecipient());
             System.out.println("Message: " + result.get().getMessage());
         }
     }
 
-    private static void searchStoredMessagesByRecipient(Scanner scanner, JsonMessageStore store) throws IOException {
+    private static void searchStoredMessagesByRecipient(Scanner scanner, JsonMessageStore store,
+                                                         MessageSession session) throws IOException {
         String recipient = prompt(scanner, "Enter recipient number: ").trim();
+        List<Message> sessionResults = session.findMessagesByRecipient(recipient);
+        if (!sessionResults.isEmpty()) {
+            for (Message message : sessionResults) {
+                System.out.println("Message: " + message.getMessageText());
+            }
+            return;
+        }
         List<JsonMessageStore.StoredMessage> results = store.findByRecipient(recipient);
         if (results.isEmpty()) {
             System.out.println("No messages were found for recipient " + recipient + ".");
