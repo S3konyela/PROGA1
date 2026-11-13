@@ -21,9 +21,7 @@ public class JsonMessageStore {
     private final Path path;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    public JsonMessageStore(Path path) {
-        this.path = path;
-    }
+    public JsonMessageStore(Path path) { this.path = path; }
 
     public void append(Message message) throws IOException {
         List<StoredMessage> messages = readAll();
@@ -34,9 +32,7 @@ public class JsonMessageStore {
     private void writeAll(List<StoredMessage> messages) throws IOException {
         Path absolute = path.toAbsolutePath();
         Path parent = absolute.getParent();
-        if (parent != null) {
-            Files.createDirectories(parent);
-        }
+        if (parent != null) Files.createDirectories(parent);
         Path temp = Files.createTempFile(parent, "quickchat-", ".tmp");
         try {
             try (Writer writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
@@ -54,24 +50,26 @@ public class JsonMessageStore {
 
     public List<StoredMessage> readAll() throws IOException {
         Path absolute = path.toAbsolutePath();
-        if (!Files.exists(absolute) || Files.size(absolute) == 0) {
-            return new ArrayList<>();
-        }
+        if (!Files.exists(absolute) || Files.size(absolute) == 0) return new ArrayList<>();
         try (Reader reader = Files.newBufferedReader(absolute, StandardCharsets.UTF_8)) {
             List<StoredMessage> values = gson.fromJson(reader, LIST_TYPE);
             return values == null ? new ArrayList<>() : new ArrayList<>(values);
         }
     }
 
+    public void loadInto(MessageSession session) throws IOException {
+        for (StoredMessage record : readAll()) {
+            Message message = record.toMessage(session);
+            session.registerStoredMessage(message);
+        }
+    }
+
     public Optional<StoredMessage> findByMessageId(String messageId) throws IOException {
-        return readAll().stream()
-                .filter(message -> message.getMessageId().equals(messageId))
-                .findFirst();
+        return readAll().stream().filter(message -> message.getMessageId().equals(messageId)).findFirst();
     }
 
     public List<StoredMessage> findByRecipient(String recipient) throws IOException {
-        return readAll().stream()
-                .filter(message -> message.getRecipient().equals(recipient))
+        return readAll().stream().filter(message -> message.getRecipient().equals(recipient))
                 .collect(Collectors.toUnmodifiableList());
     }
 
@@ -83,15 +81,22 @@ public class JsonMessageStore {
     public boolean deleteByHash(String messageHash) throws IOException {
         List<StoredMessage> messages = readAll();
         boolean removed = messages.removeIf(message -> message.getMessageHash().equals(messageHash));
-        if (removed) {
-            writeAll(messages);
-        }
+        if (removed) writeAll(messages);
         return removed;
     }
 
-    public Path getPath() {
-        return path.toAbsolutePath();
+    public String createReport() throws IOException {
+        StringBuilder report = new StringBuilder();
+        for (StoredMessage message : readAll()) {
+            if (report.length() > 0) report.append(System.lineSeparator()).append(System.lineSeparator());
+            report.append("Message Hash: ").append(message.getMessageHash()).append(System.lineSeparator())
+                    .append("Recipient: ").append(message.getRecipient()).append(System.lineSeparator())
+                    .append("Message: ").append(message.getMessage());
+        }
+        return report.toString();
     }
+
+    public Path getPath() { return path.toAbsolutePath(); }
 
     public static class StoredMessage {
         String sender;
@@ -102,21 +107,31 @@ public class JsonMessageStore {
         String message;
         String status;
 
+        StoredMessage() { }
+
         StoredMessage(Message source) {
-            this.sender = source.getSender();
-            this.messageId = source.getMessageId();
-            this.messageNumber = source.getMessageNumber();
-            this.messageHash = source.getMessageHash();
-            this.recipient = source.getRecipient();
-            this.message = source.getMessageText();
-            this.status = source.getStatus();
+            sender = source.getSender();
+            messageId = source.getMessageId();
+            messageNumber = source.getMessageNumber();
+            messageHash = source.getMessageHash();
+            recipient = source.getRecipient();
+            message = source.getMessageText();
+            status = source.getStatus();
         }
 
-        public String getSender() { return sender == null || sender.isBlank() ? "Unknown" : sender; }
+        public String getSender() { return sender == null || sender.isBlank() ? "Developer" : sender; }
         public String getMessageId() { return messageId == null ? "" : messageId; }
+        public int getMessageNumber() { return messageNumber; }
         public String getMessageHash() { return messageHash == null ? "" : messageHash; }
         public String getRecipient() { return recipient == null ? "" : recipient; }
         public String getMessage() { return message == null ? "" : message; }
         public String getStatus() { return status == null ? "" : status; }
+
+        Message toMessage(MessageSession session) {
+            session.setSender(getSender());
+            Message result = new Message(session, getMessageId(), getMessageNumber(), getRecipient(), getMessage());
+            result.setStoredMetadata(getMessageHash(), getStatus());
+            return result;
+        }
     }
 }
