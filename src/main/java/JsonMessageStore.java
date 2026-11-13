@@ -12,6 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class JsonMessageStore {
     private static final Type LIST_TYPE = new TypeToken<List<StoredMessage>>() {}.getType();
@@ -19,49 +21,85 @@ public class JsonMessageStore {
     private final Path path;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    public JsonMessageStore(Path path) {
-        this.path = path;
-    }
+    public JsonMessageStore(Path path) { this.path = path; }
 
     public void append(Message message) throws IOException {
         List<StoredMessage> messages = readAll();
         messages.add(new StoredMessage(message));
+        writeAll(messages);
+    }
 
+    private void writeAll(List<StoredMessage> messages) throws IOException {
         Path absolute = path.toAbsolutePath();
         Path parent = absolute.getParent();
-        if (parent != null) {
-            Files.createDirectories(parent);
-        }
-
+        if (parent != null) Files.createDirectories(parent);
         Path temp = Files.createTempFile(parent, "quickchat-", ".tmp");
-        try (Writer writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
-            gson.toJson(messages, LIST_TYPE, writer);
-        }
-
         try {
-            Files.move(temp, absolute, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-        } catch (java.nio.file.AtomicMoveNotSupportedException ex) {
-            Files.move(temp, absolute, StandardCopyOption.REPLACE_EXISTING);
+            try (Writer writer = Files.newBufferedWriter(temp, StandardCharsets.UTF_8)) {
+                gson.toJson(messages, LIST_TYPE, writer);
+            }
+            try {
+                Files.move(temp, absolute, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException ex) {
+                Files.move(temp, absolute, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(temp);
         }
     }
 
     public List<StoredMessage> readAll() throws IOException {
         Path absolute = path.toAbsolutePath();
-        if (!Files.exists(absolute) || Files.size(absolute) == 0) {
-            return new ArrayList<>();
-        }
-
+        if (!Files.exists(absolute) || Files.size(absolute) == 0) return new ArrayList<>();
         try (Reader reader = Files.newBufferedReader(absolute, StandardCharsets.UTF_8)) {
             List<StoredMessage> values = gson.fromJson(reader, LIST_TYPE);
             return values == null ? new ArrayList<>() : new ArrayList<>(values);
         }
     }
 
-    public Path getPath() {
-        return path.toAbsolutePath();
+    public void loadInto(MessageSession session) throws IOException {
+        for (StoredMessage record : readAll()) {
+            Message message = record.toMessage(session);
+            session.registerStoredMessage(message);
+        }
     }
 
+    public Optional<StoredMessage> findByMessageId(String messageId) throws IOException {
+        return readAll().stream().filter(message -> message.getMessageId().equals(messageId)).findFirst();
+    }
+
+    public List<StoredMessage> findByRecipient(String recipient) throws IOException {
+        return readAll().stream().filter(message -> message.getRecipient().equals(recipient))
+                .collect(Collectors.toUnmodifiableList());
+    }
+
+    public Optional<StoredMessage> findLongestMessage() throws IOException {
+        return readAll().stream()
+                .max((first, second) -> Integer.compare(first.getMessage().length(), second.getMessage().length()));
+    }
+
+    public boolean deleteByHash(String messageHash) throws IOException {
+        List<StoredMessage> messages = readAll();
+        boolean removed = messages.removeIf(message -> message.getMessageHash().equals(messageHash));
+        if (removed) writeAll(messages);
+        return removed;
+    }
+
+    public String createReport() throws IOException {
+        StringBuilder report = new StringBuilder();
+        for (StoredMessage message : readAll()) {
+            if (report.length() > 0) report.append(System.lineSeparator()).append(System.lineSeparator());
+            report.append("Message Hash: ").append(message.getMessageHash()).append(System.lineSeparator())
+                    .append("Recipient: ").append(message.getRecipient()).append(System.lineSeparator())
+                    .append("Message: ").append(message.getMessage());
+        }
+        return report.toString();
+    }
+
+    public Path getPath() { return path.toAbsolutePath(); }
+
     public static class StoredMessage {
+        String sender;
         String messageId;
         int messageNumber;
         String messageHash;
@@ -69,13 +107,31 @@ public class JsonMessageStore {
         String message;
         String status;
 
+        StoredMessage() { }
+
         StoredMessage(Message source) {
-            this.messageId = source.getMessageId();
-            this.messageNumber = source.getMessageNumber();
-            this.messageHash = source.getMessageHash();
-            this.recipient = source.getRecipient();
-            this.message = source.getMessageText();
-            this.status = source.getStatus();
+            sender = source.getSender();
+            messageId = source.getMessageId();
+            messageNumber = source.getMessageNumber();
+            messageHash = source.getMessageHash();
+            recipient = source.getRecipient();
+            message = source.getMessageText();
+            status = source.getStatus();
+        }
+
+        public String getSender() { return sender == null || sender.isBlank() ? "Developer" : sender; }
+        public String getMessageId() { return messageId == null ? "" : messageId; }
+        public int getMessageNumber() { return messageNumber; }
+        public String getMessageHash() { return messageHash == null ? "" : messageHash; }
+        public String getRecipient() { return recipient == null ? "" : recipient; }
+        public String getMessage() { return message == null ? "" : message; }
+        public String getStatus() { return status == null ? "" : status; }
+
+        Message toMessage(MessageSession session) {
+            session.setSender(getSender());
+            Message result = new Message(session, getMessageId(), getMessageNumber(), getRecipient(), getMessage());
+            result.setStoredMetadata(getMessageHash(), getStatus());
+            return result;
         }
     }
 }
