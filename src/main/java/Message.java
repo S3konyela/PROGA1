@@ -31,14 +31,8 @@ public class Message {
         this.status = "Pending";
     }
 
-    public boolean checkMessageID() {
-        return messageId != null && messageId.matches("\\d{10}");
-    }
-
-    public boolean checkRecipientCell() {
-        return checkRecipientCell(recipient);
-    }
-
+    public boolean checkMessageID() { return messageId != null && messageId.matches("\\d{10}"); }
+    public boolean checkRecipientCell() { return checkRecipientCell(recipient); }
     public boolean checkRecipientCell(String value) {
         String candidate = value == null ? "" : value.trim();
         return candidate.matches("^\\+27\\d{9}$");
@@ -46,20 +40,14 @@ public class Message {
 
     public String validateMessageLength() {
         int length = messageText.length();
-        if (length == 0) {
-            return "Please enter a message of less than 250 characters.";
-        }
-        if (length <= 250) {
-            return MESSAGE_READY;
-        }
+        if (length == 0) return "Please enter a message of less than 250 characters.";
+        if (length <= 250) return MESSAGE_READY;
         return "Message exceeds 250 characters by " + (length - 250) + "; please reduce the size.";
     }
 
     public String createMessageHash() {
         String trimmed = messageText == null ? "" : messageText.trim();
-        if (trimmed.isEmpty()) {
-            return messageId.substring(0, 2) + ":" + messageNumber + ":";
-        }
+        if (trimmed.isEmpty()) return messageId.substring(0, 2) + ":" + messageNumber + ":";
         String[] words = trimmed.split("\\s+");
         String first = stripBoundaryPunctuation(words[0]);
         String last = stripBoundaryPunctuation(words[words.length - 1]);
@@ -70,14 +58,10 @@ public class Message {
         return word.replaceAll("^[^\\p{L}\\p{N}]+|[^\\p{L}\\p{N}]+$", "");
     }
 
-    public void setAction(Action action) {
-        this.action = action;
-    }
+    public void setAction(Action action) { this.action = action; }
 
     public String SentMessage() {
-        if (action == null) {
-            throw new IllegalStateException("Select a message action first.");
-        }
+        if (action == null) throw new IllegalStateException("Select a message action first.");
         return switch (action) {
             case SEND -> {
                 status = "Sent";
@@ -92,9 +76,7 @@ public class Message {
     public String printMessages() {
         StringBuilder output = new StringBuilder();
         for (Message sent : session.getSentMessages()) {
-            if (output.length() > 0) {
-                output.append(System.lineSeparator()).append(System.lineSeparator());
-            }
+            if (output.length() > 0) output.append(System.lineSeparator()).append(System.lineSeparator());
             output.append(sent.formatDetails());
         }
         return output.toString();
@@ -107,15 +89,18 @@ public class Message {
                 + "Message: " + messageText;
     }
 
-    public int returnTotalMessages() {
-        return session.getTotalSentMessages();
-    }
+    public int returnTotalMessages() { return session.getTotalSentMessages(); }
 
     public String storeMessage(JsonMessageStore store) throws java.io.IOException {
         status = "Stored";
         store.append(this);
         session.registerStoredMessage(this);
         return STORE_SUCCESS;
+    }
+
+    void setStoredMetadata(String hash, String storedStatus) {
+        if (hash != null && !hash.isBlank()) messageHash = hash;
+        status = storedStatus == null || storedStatus.isBlank() ? "Stored" : storedStatus;
     }
 
     public String getSender() { return session.getSender(); }
