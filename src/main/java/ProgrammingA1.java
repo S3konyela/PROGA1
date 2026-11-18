@@ -51,47 +51,70 @@ public class ProgrammingA1 {
 
         int messageLimit = readPositiveInt(scanner, "How many messages would you like to enter? ");
         MessageSession session = new MessageSession();
+        loadStoredMessages(store, session);
+
+        int completedMessages = 0;
+        while (true) {
+            displayQuickChatMenu();
+            int menuOption = readMenuInt(scanner, "Choose an option: ", 1, 4);
+            if (handleQuickChatMenuOption(menuOption, completedMessages, messageLimit, scanner, store, session)) {
+                return;
+            }
+            if (menuOption == 1 && completedMessages < messageLimit) {
+                completedMessages = enterNextMessage(scanner, store, session, completedMessages, messageLimit);
+            }
+        }
+    }
+
+    private static void loadStoredMessages(JsonMessageStore store, MessageSession session) {
         try {
             store.loadInto(session);
         } catch (IOException ex) {
             System.out.println("Stored messages could not be loaded: " + ex.getMessage());
         }
+    }
 
-        int completedMessages = 0;
-        while (true) {
-            System.out.println();
-            System.out.println("1. Send Messages");
-            System.out.println("2. Show recently sent messages");
-            System.out.println("3. Quit");
-            System.out.println("4. Stored Messages");
+    private static void displayQuickChatMenu() {
+        System.out.println();
+        System.out.println("1. Send Messages");
+        System.out.println("2. Show recently sent messages");
+        System.out.println("3. Quit");
+        System.out.println("4. Stored Messages");
+    }
 
-            int menuOption = readMenuInt(scanner, "Choose an option: ", 1, 4);
-            if (menuOption == 2) {
-                System.out.println("Coming Soon.");
-                continue;
-            }
-            if (menuOption == 3) {
+    private static boolean handleQuickChatMenuOption(int option, int completedMessages, int messageLimit,
+                                                     Scanner scanner, JsonMessageStore store,
+                                                     MessageSession session) {
+        switch (option) {
+            case 2 -> System.out.println("Coming Soon.");
+            case 3 -> {
                 System.out.println("Total messages sent: " + session.getTotalSentMessages());
-                return;
+                return true;
             }
-            if (menuOption == 4) {
-                storedMessagesMenu(scanner, store, session);
-                continue;
-            }
-            if (completedMessages >= messageLimit) {
-                System.out.println("You have reached your message limit.");
-                continue;
-            }
-
-            Message message = captureMessage(scanner, session, completedMessages);
-            if (completeMessageAction(scanner, message, store)) {
-                completedMessages++;
-                System.out.println("Messages entered: " + completedMessages + " of " + messageLimit);
-                if (completedMessages == messageLimit) {
-                    System.out.println("Total messages sent: " + session.getTotalSentMessages());
+            case 4 -> storedMessagesMenu(scanner, store, session);
+            case 1 -> {
+                if (completedMessages >= messageLimit) {
+                    System.out.println("You have reached your message limit.");
                 }
             }
+            default -> throw new IllegalArgumentException("Unsupported menu option: " + option);
         }
+        return false;
+    }
+
+    private static int enterNextMessage(Scanner scanner, JsonMessageStore store, MessageSession session,
+                                        int completedMessages, int messageLimit) {
+        Message message = captureMessage(scanner, session, completedMessages);
+        if (!completeMessageAction(scanner, message, store)) {
+            return completedMessages;
+        }
+
+        int updatedCount = completedMessages + 1;
+        System.out.println("Messages entered: " + updatedCount + " of " + messageLimit);
+        if (updatedCount == messageLimit) {
+            System.out.println("Total messages sent: " + session.getTotalSentMessages());
+        }
+        return updatedCount;
     }
 
     /** Handles the six Part 3 operations for stored messages. */
@@ -242,7 +265,7 @@ public class ProgrammingA1 {
             }
             if (action == 2) {
                 message.setAction(Message.Action.DISCARD);
-                System.out.println(message.SentMessage());
+                System.out.println(message.processMessageAction());
                 String confirmation = prompt(scanner, "Enter 0 to confirm: ");
                 if ("0".equals(confirmation.trim())) {
                     message.markDiscarded();
@@ -266,23 +289,26 @@ public class ProgrammingA1 {
 
     private static int readPositiveInt(Scanner scanner, String prompt) {
         while (true) {
-            String value = prompt(scanner, prompt);
-            try {
-                int parsed = Integer.parseInt(value.trim());
-                if (parsed > 0) return parsed;
-            } catch (NumberFormatException ignored) { }
+            Integer parsed = readInteger(scanner, prompt);
+            if (parsed != null && parsed > 0) return parsed;
             System.out.println("Please enter a whole number greater than 0.");
         }
     }
 
     private static int readMenuInt(Scanner scanner, String prompt, int min, int max) {
         while (true) {
-            String value = prompt(scanner, prompt);
-            try {
-                int parsed = Integer.parseInt(value.trim());
-                if (parsed >= min && parsed <= max) return parsed;
-            } catch (NumberFormatException ignored) { }
+            Integer parsed = readInteger(scanner, prompt);
+            if (parsed != null && parsed >= min && parsed <= max) return parsed;
             System.out.println("Please enter a number from " + min + " to " + max + ".");
+        }
+    }
+
+    private static Integer readInteger(Scanner scanner, String prompt) {
+        String value = prompt(scanner, prompt);
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException ignored) {
+            return null;
         }
     }
 
