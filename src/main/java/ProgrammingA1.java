@@ -3,7 +3,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Scanner;
 
+/** Runs the QuickChat registration, login, messaging, and stored-message menus. */
 public class ProgrammingA1 {
+    /** Application entry point. @param args command-line arguments (not used) */
     public static void main(String[] args) {
         run(new Scanner(System.in), new JsonMessageStore(Path.of("stored_messages.json")));
     }
@@ -42,6 +44,7 @@ public class ProgrammingA1 {
         runQuickChat(scanner, store);
     }
 
+    /** Coordinates the main menu and message-entry actions. */
     static void runQuickChat(Scanner scanner, JsonMessageStore store) {
         System.out.println();
         System.out.println("Welcome to QuickChat.");
@@ -91,6 +94,7 @@ public class ProgrammingA1 {
         }
     }
 
+    /** Handles the six Part 3 operations for stored messages. */
     static void storedMessagesMenu(Scanner scanner, JsonMessageStore store, MessageSession session) {
         while (true) {
             System.out.println();
@@ -223,6 +227,7 @@ public class ProgrammingA1 {
         return message;
     }
 
+    /** Applies the user's send, disregard, or store choice to a message. */
     private static boolean completeMessageAction(Scanner scanner, Message message, JsonMessageStore store) {
         while (true) {
             System.out.println("1. Send Message");
@@ -231,7 +236,7 @@ public class ProgrammingA1 {
             int action = readMenuInt(scanner, "Choose a message action: ", 1, 3);
             if (action == 1) {
                 message.setAction(Message.Action.SEND);
-                System.out.println(message.SentMessage());
+                System.out.println(message.processMessageAction());
                 System.out.println(message.formatDetails());
                 return true;
             }
