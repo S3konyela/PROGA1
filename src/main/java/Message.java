@@ -1,3 +1,7 @@
+/**
+ * Represents a QuickChat message and manages validation, hashing, formatting,
+ * and the action selected by the user.
+ */
 public class Message {
     public static final String MESSAGE_READY = "Message ready to send.";
     public static final String RECIPIENT_SUCCESS = "Cell phone number successfully captured.";
@@ -38,6 +42,10 @@ public class Message {
         return candidate.matches("^\\+27\\d{9}$");
     }
 
+    /**
+     * Checks that the message contains between 1 and 250 characters.
+     * @return a validation message describing the result
+     */
     public String validateMessageLength() {
         int length = messageText.length();
         if (length == 0) return "Please enter a message of less than 250 characters.";
@@ -45,6 +53,10 @@ public class Message {
         return "Message exceeds 250 characters by " + (length - 250) + "; please reduce the size.";
     }
 
+    /**
+     * Creates the required hash from the message ID, number, and message words.
+     * @return the formatted message hash
+     */
     public String createMessageHash() {
         String trimmed = messageText == null ? "" : messageText.trim();
         if (trimmed.isEmpty()) return messageId.substring(0, 2) + ":" + messageNumber + ":";
@@ -60,7 +72,11 @@ public class Message {
 
     public void setAction(Action action) { this.action = action; }
 
-    public String SentMessage() {
+    /**
+     * Processes the selected action and updates the session when appropriate.
+     * @return the confirmation or prompt associated with the selected action
+     */
+    public String processMessageAction() {
         if (action == null) throw new IllegalStateException("Select a message action first.");
         return switch (action) {
             case SEND -> {
@@ -91,6 +107,12 @@ public class Message {
 
     public int returnTotalMessages() { return session.getTotalSentMessages(); }
 
+    /**
+     * Saves this message to JSON storage and registers it in the current session.
+     * @param store the JSON message store
+     * @return the storage confirmation message
+     * @throws java.io.IOException if the message cannot be written
+     */
     public String storeMessage(JsonMessageStore store) throws java.io.IOException {
         status = "Stored";
         store.append(this);
