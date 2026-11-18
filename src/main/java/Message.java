@@ -89,6 +89,17 @@ public class Message {
         };
     }
 
+    /**
+     * Retains the original Part 2 method name for compatibility.
+     *
+     * @return the confirmation or prompt associated with the selected action
+     * @deprecated use {@link #processMessageAction()} instead
+     */
+    @Deprecated
+    public String SentMessage() {
+        return processMessageAction();
+    }
+
     public String printMessages() {
         StringBuilder output = new StringBuilder();
         for (Message sent : session.getSentMessages()) {
