@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/** Reads, writes, searches, and reports QuickChat messages in JSON storage. */
 public class JsonMessageStore {
     private static final Type LIST_TYPE = new TypeToken<List<StoredMessage>>() {}.getType();
 
@@ -23,6 +24,7 @@ public class JsonMessageStore {
 
     public JsonMessageStore(Path path) { this.path = path; }
 
+    /** Adds a message to the existing JSON collection. */
     public void append(Message message) throws IOException {
         List<StoredMessage> messages = readAll();
         messages.add(new StoredMessage(message));
@@ -48,6 +50,7 @@ public class JsonMessageStore {
         }
     }
 
+    /** Reads all stored messages, returning an empty list when no file exists. */
     public List<StoredMessage> readAll() throws IOException {
         Path absolute = path.toAbsolutePath();
         if (!Files.exists(absolute) || Files.size(absolute) == 0) return new ArrayList<>();
@@ -57,6 +60,7 @@ public class JsonMessageStore {
         }
     }
 
+    /** Loads persisted messages into the supplied in-memory session. */
     public void loadInto(MessageSession session) throws IOException {
         for (StoredMessage record : readAll()) {
             Message message = record.toMessage(session);
@@ -78,6 +82,7 @@ public class JsonMessageStore {
                 .max((first, second) -> Integer.compare(first.getMessage().length(), second.getMessage().length()));
     }
 
+    /** Deletes the stored message matching the supplied hash, if present. */
     public boolean deleteByHash(String messageHash) throws IOException {
         List<StoredMessage> messages = readAll();
         boolean removed = messages.removeIf(message -> message.getMessageHash().equals(messageHash));
@@ -85,6 +90,7 @@ public class JsonMessageStore {
         return removed;
     }
 
+    /** Builds a formatted report containing each stored message's hash, recipient, and text. */
     public String createReport() throws IOException {
         StringBuilder report = new StringBuilder();
         for (StoredMessage message : readAll()) {
