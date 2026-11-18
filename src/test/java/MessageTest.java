@@ -60,7 +60,7 @@ class MessageTest {
         Message message = fixed("Hi", "+27718693002", 0);
         message.setAction(Message.Action.SEND);
 
-        assertEquals("Message successfully sent.", message.SentMessage());
+        assertEquals("Message successfully sent.", message.processMessageAction());
         assertEquals(1, message.returnTotalMessages());
     }
 
