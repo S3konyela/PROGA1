@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/** Maintains message collections and lookup metadata for one QuickChat session. */
 public class MessageSession {
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -16,6 +17,7 @@ public class MessageSession {
     private final List<String> messageIds = new ArrayList<>();
     private String sender = "Developer";
 
+    /** Generates a unique ten-digit message ID for this session. */
     public String generateUniqueMessageId() {
         String id;
         do {
@@ -95,12 +97,14 @@ public class MessageSession {
     public List<String> getMessageHashArray() { return List.copyOf(messageHashes); }
     public List<String> getMessageIdArray() { return List.copyOf(messageIds); }
 
+    /** Finds a message in any session collection, or returns null when absent. */
     public Message findMessageById(String id) {
         return allSessionMessages().stream()
                 .filter(message -> message.getMessageId().equals(id))
                 .findFirst().orElse(null);
     }
 
+    /** Finds messages across sent, disregarded, and stored collections. */
     public List<Message> findMessagesByRecipient(String recipient) {
         return allSessionMessages().stream()
                 .filter(message -> message.getRecipient().equals(recipient))
