@@ -25,7 +25,7 @@
         </dependency>
     </dependencies>
     <build>
-        <finalName>QuickChat-Part2</finalName>
+        <finalName>QuickChat-Part3</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

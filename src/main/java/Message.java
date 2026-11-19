@@ -1,3 +1,7 @@
+/**
+ * Represents a QuickChat message and manages validation, hashing, formatting,
+ * and the action selected by the user.
+ */
 public class Message {
     public static final String MESSAGE_READY = "Message ready to send.";
     public static final String RECIPIENT_SUCCESS = "Cell phone number successfully captured.";
@@ -31,36 +35,31 @@ public class Message {
         this.status = "Pending";
     }
 
-    public boolean checkMessageID() {
-        return messageId != null && messageId.matches("\\d{10}");
-    }
-
-    public boolean checkRecipientCell() {
-        return checkRecipientCell(recipient);
-    }
-
+    public boolean checkMessageID() { return messageId != null && messageId.matches("\\d{10}"); }
+    public boolean checkRecipientCell() { return checkRecipientCell(recipient); }
     public boolean checkRecipientCell(String value) {
         String candidate = value == null ? "" : value.trim();
         return candidate.matches("^\\+27\\d{9}$");
     }
 
+    /**
+     * Checks that the message contains between 1 and 250 characters.
+     * @return a validation message describing the result
+     */
     public String validateMessageLength() {
         int length = messageText.length();
-        if (length == 0) {
-            return "Please enter a message of less than 250 characters.";
-        }
-        if (length <= 250) {
-            return MESSAGE_READY;
-        }
+        if (length == 0) return "Please enter a message of less than 250 characters.";
+        if (length <= 250) return MESSAGE_READY;
         return "Message exceeds 250 characters by " + (length - 250) + "; please reduce the size.";
     }
 
+    /**
+     * Creates the required hash from the message ID, number, and message words.
+     * @return the formatted message hash
+     */
     public String createMessageHash() {
         String trimmed = messageText == null ? "" : messageText.trim();
-        if (trimmed.isEmpty()) {
-            return messageId.substring(0, 2) + ":" + messageNumber + ":";
-        }
-
+        if (trimmed.isEmpty()) return messageId.substring(0, 2) + ":" + messageNumber + ":";
         String[] words = trimmed.split("\\s+");
         String first = stripBoundaryPunctuation(words[0]);
         String last = stripBoundaryPunctuation(words[words.length - 1]);
@@ -71,15 +70,14 @@ public class Message {
         return word.replaceAll("^[^\\p{L}\\p{N}]+|[^\\p{L}\\p{N}]+$", "");
     }
 
-    public void setAction(Action action) {
-        this.action = action;
-    }
+    public void setAction(Action action) { this.action = action; }
 
-    public String SentMessage() {
-        if (action == null) {
-            throw new IllegalStateException("Select a message action first.");
-        }
-
+    /**
+     * Processes the selected action and updates the session when appropriate.
+     * @return the confirmation or prompt associated with the selected action
+     */
+    public String processMessageAction() {
+        if (action == null) throw new IllegalStateException("Select a message action first.");
         return switch (action) {
             case SEND -> {
                 status = "Sent";
@@ -91,12 +89,21 @@ public class Message {
         };
     }
 
+    /**
+     * Retains the original Part 2 method name for compatibility.
+     *
+     * @return the confirmation or prompt associated with the selected action
+     * @deprecated use {@link #processMessageAction()} instead
+     */
+    @Deprecated
+    public String SentMessage() {
+        return processMessageAction();
+    }
+
     public String printMessages() {
         StringBuilder output = new StringBuilder();
         for (Message sent : session.getSentMessages()) {
-            if (output.length() > 0) {
-                output.append(System.lineSeparator()).append(System.lineSeparator());
-            }
+            if (output.length() > 0) output.append(System.lineSeparator()).append(System.lineSeparator());
             output.append(sent.formatDetails());
         }
         return output.toString();
@@ -109,16 +116,27 @@ public class Message {
                 + "Message: " + messageText;
     }
 
-    public int returnTotalMessages() {
-        return session.getTotalSentMessages();
-    }
+    public int returnTotalMessages() { return session.getTotalSentMessages(); }
 
+    /**
+     * Saves this message to JSON storage and registers it in the current session.
+     * @param store the JSON message store
+     * @return the storage confirmation message
+     * @throws java.io.IOException if the message cannot be written
+     */
     public String storeMessage(JsonMessageStore store) throws java.io.IOException {
         status = "Stored";
         store.append(this);
+        session.registerStoredMessage(this);
         return STORE_SUCCESS;
     }
 
+    void setStoredMetadata(String hash, String storedStatus) {
+        if (hash != null && !hash.isBlank()) messageHash = hash;
+        status = storedStatus == null || storedStatus.isBlank() ? "Stored" : storedStatus;
+    }
+
+    public String getSender() { return session.getSender(); }
     public String getMessageId() { return messageId; }
     public int getMessageNumber() { return messageNumber; }
     public String getRecipient() { return recipient; }
@@ -128,5 +146,6 @@ public class Message {
 
     public void markDiscarded() {
         status = "Discarded";
+        session.registerDisregardedMessage(this);
     }
 }

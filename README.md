@@ -198,6 +198,20 @@ The supplied second recipient does not contain the required international code, 
 
 ---
 
+## Part 3 — Stored Messages and Reports
+
+Part 3 adds a fourth QuickChat menu option for stored-message management. The application keeps session arrays for sent, disregarded and stored messages, plus message hashes and IDs. Stored messages are loaded from the Gson JSON file when QuickChat starts.
+
+The **Stored Messages** menu provides:
+- Sender and recipient listing
+- Longest stored-message lookup
+- Message-ID search across the current session
+- Recipient search across sent, disregarded and stored session messages
+- Deletion of a stored message by its message hash
+- A stored-message report containing message hash, recipient and message text
+
+The Part 3 unit tests are in `src/test/java/StoredMessagesPart3Test.java` and cover the six prescribed behaviours using JUnit 5.
+
 ## Project structure
 
 - `src/main/java/Login.java` — Part 1 validation, registration and login
